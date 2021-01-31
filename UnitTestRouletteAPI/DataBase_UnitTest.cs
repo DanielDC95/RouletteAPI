@@ -10,7 +10,7 @@ namespace UnitTestRouletteAPI
         [TestMethod]
         public void TestConnect()
         {
-            DataBase.connect();
+            DataBase.dataBaseConnect();
             var connectResult = DataBase.isConnected();
             Assert.IsTrue(connectResult);
         }
@@ -18,7 +18,7 @@ namespace UnitTestRouletteAPI
         [TestMethod]
         public void TestDesonnect()
         {
-            DataBase.desconnect();
+            DataBase.dataBaseDesconnect();
             var connectResult = DataBase.isConnected();
             Assert.IsFalse(connectResult);
         }
@@ -26,7 +26,7 @@ namespace UnitTestRouletteAPI
         [TestMethod]
         public void TestSelect()
         {
-            DataBase.connect();
+            DataBase.dataBaseConnect();
             List<string> fields = new List<string>();
             
             DataBase.DataToQuerySelect data = new DataBase.DataToQuerySelect();
@@ -34,21 +34,28 @@ namespace UnitTestRouletteAPI
             fields.Add("state");
             data.tableName = "states";
             data.fields = fields;
+            DataBase.Conditions condition = new DataBase.Conditions();
+            List<DataBase.Conditions> conditionsList = new List<DataBase.Conditions>();
+            condition.filedName = "id";
+            condition.condition = "=";
+            condition.value = "1";
+            conditionsList.Add(condition);
+            data.conditions = conditionsList;
             DataBase.FieldsToOrder field = new DataBase.FieldsToOrder();
             List<DataBase.FieldsToOrder> orderBy = new List<DataBase.FieldsToOrder>();
             field.filedName = "id";
             field.orderType = "desc";
             orderBy.Add(field);
             data.orderBy = orderBy;
-            var tableResult = DataBase.select(data);
-            DataBase.desconnect();
+            var tableResult = DataBase.dataBaseSelect(data);
+            DataBase.dataBaseDesconnect();
             Assert.IsNotNull(tableResult);
         }
 
         [TestMethod]
         public void TestInsert_Ok()
         {
-            DataBase.connect();
+            DataBase.dataBaseConnect();
             DataBase.FieldAndValue field = new DataBase.FieldAndValue();
             List <DataBase.FieldAndValue> fields = new List<DataBase.FieldAndValue>();
             DataBase.DataToQueryInsert data = new DataBase.DataToQueryInsert();
@@ -60,15 +67,15 @@ namespace UnitTestRouletteAPI
             fields.Add(field);
             data.tableName = "roulettes";
             data.fields = fields;
-            var insertResult = DataBase.insert(data);
-            DataBase.desconnect();
+            var insertResult = DataBase.dataBaseInsert(data);
+            DataBase.dataBaseDesconnect();
             Assert.IsTrue(insertResult);
         }
 
         [TestMethod]
         public void TestInsertWithoutFieldsOrValues()
         {
-            DataBase.connect();
+            DataBase.dataBaseConnect();
             DataBase.FieldAndValue field = new DataBase.FieldAndValue();
             List<DataBase.FieldAndValue> fields = new List<DataBase.FieldAndValue>();
             DataBase.DataToQueryInsert data = new DataBase.DataToQueryInsert();
@@ -77,15 +84,15 @@ namespace UnitTestRouletteAPI
             fields.Add(field);
             data.tableName = "roulettes";
             data.fields = fields;
-            var insertResult = DataBase.insert(data);
-            DataBase.desconnect();
+            var insertResult = DataBase.dataBaseInsert(data);
+            DataBase.dataBaseDesconnect();
             Assert.IsFalse(insertResult);
         }
 
         [TestMethod]
         public void TestUpdate_Ok()
         {
-            DataBase.connect();
+            DataBase.dataBaseConnect();
             DataBase.FieldAndValue field = new DataBase.FieldAndValue();
             List<DataBase.FieldAndValue> fields = new List<DataBase.FieldAndValue>();
             DataBase.DataToQueryUpdate data = new DataBase.DataToQueryUpdate();
@@ -98,15 +105,15 @@ namespace UnitTestRouletteAPI
             data.tableName = "roulettes";
             data.id = 1;
             data.fields = fields;
-            var updateResult = DataBase.update(data);
-            DataBase.desconnect();
+            var updateResult = DataBase.dataBaseUpdate(data);
+            DataBase.dataBaseDesconnect();
             Assert.IsTrue(updateResult);
         }
 
         [TestMethod]
         public void TestUpdateWithoutTable()
         {
-            DataBase.connect();
+            DataBase.dataBaseConnect();
             DataBase.FieldAndValue field = new DataBase.FieldAndValue();
             List<DataBase.FieldAndValue> fields = new List<DataBase.FieldAndValue>();
             DataBase.DataToQueryUpdate data = new DataBase.DataToQueryUpdate();
@@ -119,8 +126,8 @@ namespace UnitTestRouletteAPI
             data.tableName = "";
             data.id = 1;
             data.fields = fields;
-            var updateResult = DataBase.update(data);
-            DataBase.desconnect();
+            var updateResult = DataBase.dataBaseUpdate(data);
+            DataBase.dataBaseDesconnect();
             Assert.IsFalse(updateResult);
         }
     }

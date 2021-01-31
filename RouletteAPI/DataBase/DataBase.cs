@@ -12,10 +12,13 @@ namespace RouletteAPI.DataBase
         private static NpgsqlConnection dataBaseConnection = new NpgsqlConnection("Server = localhost; User Id = postgres; Password = 1234; DataBase = roulette_db");
         private static bool connected = false;
 
+        #region Structurs
         public struct DataToQuerySelect
         {
             public string tableName;
+            public string limit;
             public List<string> fields;
+            public List<Conditions> conditions;
             public List<FieldsToOrder> orderBy;
         }
 
@@ -38,13 +41,21 @@ namespace RouletteAPI.DataBase
             public string value;
         }
 
+        public struct Conditions
+        {
+            public string filedName;
+            public string condition;
+            public string value;
+        }
+
         public struct FieldsToOrder
         {
             public string filedName;
             public string orderType;
         }
+        #endregion
 
-        public static void connect()
+        public static void dataBaseConnect()
         {
             try
             {
@@ -60,7 +71,7 @@ namespace RouletteAPI.DataBase
             }
         }
 
-        public static void desconnect()
+        public static void dataBaseDesconnect()
         {
             try
             {
@@ -81,12 +92,14 @@ namespace RouletteAPI.DataBase
             return connected;
         }
 
-        public static DataTable select(DataToQuerySelect queryData)
+        public static DataTable dataBaseSelect(DataToQuerySelect queryData)
         {
             DataTable table = new DataTable();
             string fields = getFieldsForSelect(queryData);
+            string limit = getLimit(queryData);
             string orderBy = getOrderBy(queryData);
-            string query = "Select " + fields + " From " + queryData.tableName + " Order By " + orderBy + ";";
+            string conditions = getConditionsForSelect(queryData);
+            string query = "Select " + fields + " From " + queryData.tableName + conditions + orderBy + limit + ";";
             try
             {
                 if (connected == true)
@@ -108,7 +121,7 @@ namespace RouletteAPI.DataBase
             return table;
         }
 
-        public static bool insert(DataToQueryInsert queryData)
+        public static bool dataBaseInsert(DataToQueryInsert queryData)
         {
             bool insertResult;
             int rowsAffected = 0;
@@ -145,7 +158,7 @@ namespace RouletteAPI.DataBase
             return insertResult;
         }
 
-        public static bool update(DataToQueryUpdate queryData)
+        public static bool dataBaseUpdate(DataToQueryUpdate queryData)
         {
             bool updateResult;
             int rowsAffected = 0;
@@ -181,6 +194,16 @@ namespace RouletteAPI.DataBase
             return updateResult;
         }
 
+        private static string getLimit(DataToQuerySelect queryData)
+        {
+            string top = "";
+            if (!String.IsNullOrEmpty(queryData.limit))
+            {
+                top = " limit " + queryData.limit + " ";
+            }
+            return top;
+        }
+
         private static string getFieldsForSelect(DataToQuerySelect queryData)
         {
             string fields = "";
@@ -199,21 +222,72 @@ namespace RouletteAPI.DataBase
             return fields;
         }
 
+        private static string getConditionsForSelect(DataToQuerySelect queryData)
+        {
+            string condition = "";
+            string resultConditions = "";
+            try
+            {
+                foreach(Conditions conditions in queryData.conditions)
+                {
+                    switch (condition)
+                    {
+                        case "=":
+                            condition = conditions.filedName + " " + conditions.condition + " '" + conditions.value + "'";
+                            break;
+                        default:
+                            condition = conditions.filedName + " " + conditions.condition + " " + conditions.value;
+                            break;
+                    }
+                    if (String.IsNullOrEmpty(resultConditions))
+                    {
+                        resultConditions = condition;
+                    }
+                    else
+                    {
+                        resultConditions = resultConditions + " and " + condition;
+                    }
+                    condition = "";
+                }
+                if (!String.IsNullOrEmpty(resultConditions))
+                {
+                    resultConditions = " Where " + resultConditions;
+                }
+            }
+            catch
+            {
+                resultConditions = "";
+            }
+
+            return resultConditions;
+        }
+
         private static string getOrderBy(DataToQuerySelect queryData)
         {
             string orderBy = "";
-            foreach (FieldsToOrder field in queryData.orderBy)
+            try
             {
-                if (String.IsNullOrEmpty(orderBy))
+                foreach (FieldsToOrder field in queryData.orderBy)
                 {
-                    orderBy = field.filedName + " " + field.orderType;
+                    if (String.IsNullOrEmpty(orderBy))
+                    {
+                        orderBy = field.filedName + " " + field.orderType;
+                    }
+                    else
+                    {
+                        orderBy = orderBy + ", " + field.filedName + " " + field.orderType; ;
+                    }
                 }
-                else
+                if (!String.IsNullOrEmpty(orderBy))
                 {
-                    orderBy = orderBy + ", " + field.filedName + " " + field.orderType; ;
+                    orderBy = " Order By " + orderBy;
                 }
             }
-
+            catch
+            {
+                orderBy = "";
+            }
+            
             return orderBy;
         }
 
@@ -242,7 +316,7 @@ namespace RouletteAPI.DataBase
             return fields;
         }
 
-        private static string getFieldsForUpdate(DataToQueryUpdate queryData)
+        public static string getFieldsForUpdate(DataToQueryUpdate queryData)
         {
             string fields = null;
             try
@@ -290,6 +364,37 @@ namespace RouletteAPI.DataBase
             }
             
             return values;
+        }
+
+        public static string findAFieldValueInTable(DataTable table, string fieldName, int lineNum)
+        {
+            string value = "";
+            int linesCount = 0;
+            int columnsCount = 0;
+            
+            foreach(DataRow row in table.Rows)
+            {
+                if(linesCount < lineNum)
+                {
+                    linesCount++;
+                    continue;
+                }
+                foreach (DataColumn column in table.Columns)
+                {
+                    if (column.ColumnName.Equals(fieldName))
+                    {
+                        value = row[column].ToString();
+                        break;
+                    }
+                    columnsCount++;
+                }
+                if(linesCount >= lineNum)
+                {
+                    break;
+                }
+            }
+
+            return value;
         }
     }
 }
