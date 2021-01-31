@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
-using RouletteAPI.DataBase;
+//using RouletteAPI.DataBase;
 using static RouletteAPI.DataBase.DataBase;
 
 namespace RouletteAPI.Models
@@ -14,11 +14,11 @@ namespace RouletteAPI.Models
         private string state;
         private static bool errorInConsult = false;
 
-        public Roulette(int _id = 0, int _last_number = 36, string _state = "close")
+        public Roulette(int _id = 0, int _last_number = 36)
         {
             id = _id;
             last_number = _last_number;
-            state = _state;
+            state = State.getState("2");
         }
 
         public int getID()
