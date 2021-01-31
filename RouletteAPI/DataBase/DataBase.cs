@@ -230,7 +230,7 @@ namespace RouletteAPI.DataBase
             {
                 foreach(Conditions conditions in queryData.conditions)
                 {
-                    switch (condition)
+                    switch (conditions.condition)
                     {
                         case "=":
                             condition = conditions.filedName + " " + conditions.condition + " '" + conditions.value + "'";

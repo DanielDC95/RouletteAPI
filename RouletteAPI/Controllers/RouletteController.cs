@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -14,8 +15,9 @@ namespace RouletteAPI.Controllers
     public class RouletteController : ControllerBase
     {
         // GET: api/Roulette
+        [Route("[action]/")]
         [HttpGet]
-        public List<Dictionary<string, string>> Get()
+        public List<Dictionary<string, string>> ToList()
         {
             DataToQuerySelect queryData = new DataToQuerySelect();
             List<Dictionary<string, string>> response = new List<Dictionary<string, string>>();
@@ -49,12 +51,13 @@ namespace RouletteAPI.Controllers
         [HttpGet("{id}", Name = "Get")]
         public string Get(int id)
         {
-            return "value";
+            return id.ToString();
         }
 
         // POST: api/Roulette
+        [Route("[action]/")]
         [HttpPost]
-        public Dictionary<string, string> Post()
+        public Dictionary<string, string> Create()
         {
             Roulette roulette = new Roulette();
             bool created = roulette.create();
@@ -72,9 +75,43 @@ namespace RouletteAPI.Controllers
         }
 
         // PUT: api/Roulette/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        [Route("[action]/")]
+        [HttpPut]
+        public Dictionary<string, string> Open([FromBody] JsonElement body)
         {
+            Dictionary<string, string> response = new Dictionary<string, string>();
+            try
+            {
+                int id = Int32.Parse(body.GetProperty("id").ToString());
+                Roulette roulette = new Roulette();
+                bool loaded = roulette.loadRoulette(id);
+                bool opened = false;
+                if (loaded)
+                {
+                    opened = roulette.Open();
+                }
+                if (opened)
+                {
+                    Bets.openRouletteBet(id);
+                    response.Add("result", "Success");
+                    response.Add("id", roulette.getID().ToString());
+                    response.Add("state", roulette.getState());
+                }
+                else
+                {
+                    response.Add("result", "Failure");
+                    response.Add("id", roulette.getID().ToString());
+                    response.Add("state", roulette.getState());
+                    response.Add("message", "Update failed.");
+                }
+            }
+            catch
+            {
+                response.Add("result", "Failure");
+                response.Add("message", "Has hapenned an error during the process.");
+            }
+            
+            return response;
         }
 
         // DELETE: api/ApiWithActions/5
@@ -94,7 +131,7 @@ namespace RouletteAPI.Controllers
                     string state = findAFieldValueInTable(table: table, fieldName: "state_id", lineNum: i);
                     state = State.getState(state);
                     Dictionary<string, string> roulette = new Dictionary<string, string>();
-                    roulette.Add("id", id);
+                    roulette.Add("roulette_id", id);
                     roulette.Add("state", state);
                     roulettesLists.Add(roulette);
                 }

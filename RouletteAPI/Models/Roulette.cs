@@ -12,6 +12,7 @@ namespace RouletteAPI.Models
         private int id;
         private int last_number;
         private string state;
+        private string temporalState;
         private static bool errorInConsult = false;
 
         public Roulette(int _id = 0, int _last_number = 36)
@@ -25,6 +26,7 @@ namespace RouletteAPI.Models
         {
             return id;
         }
+
 
         public string getState()
         {
@@ -66,6 +68,39 @@ namespace RouletteAPI.Models
             }
 
             return created;
+        }
+
+        public bool Open()
+        {
+            DataToQueryUpdate queryData = new DataToQueryUpdate();
+            bool updated = false;
+            try
+            {
+                queryData.tableName = "roulettes";
+                FieldAndValue field = new FieldAndValue();
+                List<FieldAndValue> fieldsToInsert = new List<FieldAndValue>();
+                field.filedName = "state_id";
+                field.value = State.getID("open");
+                fieldsToInsert.Add(field);
+                field.filedName = "last_number";
+                field.value = last_number.ToString();
+                fieldsToInsert.Add(field);
+                queryData.fields = fieldsToInsert;
+                queryData.id = id;
+                dataBaseConnect();
+                updated = dataBaseUpdate(queryData);
+                dataBaseDesconnect();
+                if (updated)
+                {
+                    state = "open";
+                }
+            }
+            catch
+            {
+                updated = false;
+            }
+
+            return updated;
         }
 
         public bool rouletteExists()
@@ -138,6 +173,41 @@ namespace RouletteAPI.Models
 
             return createdID;
         }
-    
+        
+        public bool loadRoulette(int _id)
+        {
+            DataToQuerySelect queryData = new DataToQuerySelect();
+            id = _id;
+            bool loaded = false;
+            bool exists = rouletteExists();
+            if (exists)
+            {
+                queryData.tableName = "roulettes";
+                List<string> fields = new List<string>();
+                fields.Add("state_id");
+                fields.Add("last_number");
+                queryData.fields = fields;
+                Conditions condition = new Conditions();
+                List<Conditions> conditionsList = new List<Conditions>();
+                condition.filedName = "id";
+                condition.condition = "=";
+                condition.value = id.ToString();
+                conditionsList.Add(condition);
+                queryData.conditions = conditionsList;
+                dataBaseConnect();
+                DataTable table = dataBaseSelect(queryData);
+                dataBaseDesconnect();
+                last_number = Int32.Parse(findAFieldValueInTable(table: table, fieldName: "last_number", lineNum: 0));
+                state = findAFieldValueInTable(table: table, fieldName: "state_id", lineNum: 0);
+                state = State.getState(state);
+                loaded = true;
+            }
+            else
+            {
+                id = 0;
+            }
+
+            return loaded;
+        }
     }
 }
