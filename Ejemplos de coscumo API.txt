@@ -1,0 +1,35 @@
+---Listado de ruletas
+URL: https://localhost:44324/api/Roulette/ToList
+Method: GET
+
+---Creacion de nueva ruleta
+URL: https://localhost:44324/api/Roulette/Create
+Method: POST
+
+---Abrir Ruleta
+URL: https://localhost:44324/api/Roulette/Open
+Method: PUT
+Json:
+{
+    "id": "8"
+}
+
+---Realizar apuesta
+URL: https://localhost:44324/api/Roulette/ToBet
+Method: POST
+HEADER: user_id
+Json:
+{
+    "roullete_id": "8",
+    "betType": "Number",
+    "betValue": "12",
+    "amount": "70000"
+}
+
+---Cerrar ruleta
+URL: https://localhost:44324/api/Roulette/Close
+Method: PUT
+Json: 
+{
+    "id": "10"
+}

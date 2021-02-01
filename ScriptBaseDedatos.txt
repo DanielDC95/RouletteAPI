@@ -1,0 +1,8 @@
+Create database roulette_db;
+CREATE TYPE colors AS ENUM ('Red', 'Black');
+Create table states (id SERIAL, state Varchar(10), PRIMARY KEY (id));
+Create table roulettes (id SERIAL, last_number Integer, state_id Integer, PRIMARY KEY (id));
+Create table roulette_bets (id SERIAL, roulette_id Integer, state_id Integer, winner_number Integer, PRIMARY KEY (id));
+Create table bet_by_number (id SERIAL, roulette_bets_id Integer, user_id Integer, number Integer, amount Integer, PRIMARY KEY (id));
+Create table bet_by_color(id SERIAL, roulette_bets_id Integer, user_id Integer, color Integer, amount Integer, PRIMARY KEY (id));
+Insert Into states (state) values ('open'),('close');
