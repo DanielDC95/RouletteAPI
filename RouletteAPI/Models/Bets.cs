@@ -8,6 +8,7 @@ namespace RouletteAPI.Models
 {
     public class Bets
     {
+        public static string error;
         public struct Bet
         {
             public int roullete_id;
@@ -98,6 +99,11 @@ namespace RouletteAPI.Models
         public static bool toBet(Bet bet)
         {
             bool betCorrectly = false;
+            bool validBet = validateBet(bet);
+            if (!validBet)
+            {
+                return betCorrectly;
+            }
             switch (bet.betType)
             {
                 case "color":
@@ -401,6 +407,41 @@ namespace RouletteAPI.Models
             }
 
             return reward;
-        } 
+        }
+
+        private static bool validateBet(Bet bet)
+        {
+            error = "";
+            try
+            {
+                if (!(bet.betType.Equals("number") || bet.betType.Equals("color")))
+                {
+                    error = "The valid bet type are \"number\" and \"color\".";
+                    return false;
+                }
+                if (bet.betType.Equals("number") && (Int32.Parse(bet.betValue) < 0 || Int32.Parse(bet.betValue) > 36))
+                {
+                    error = "The number must be between 0 and 36.";
+                    return false;
+                }
+                if (bet.betType.Equals("color") && !(bet.betValue.Equals("Red") || bet.betValue.Equals("Black")))
+                {
+                    error = "The number must be \"Red\" or \"Black\".";
+                    return false;
+                }
+                if (bet.amountToBet > 10000 || bet.amountToBet <= 0)
+                {
+                    error = "The amount must be between 1 and 10000.";
+                    return false;
+                }
+            }
+            catch
+            {
+                error = "An error has occurred.";
+                return false;
+            }
+
+            return true;
+        }
     }
 }

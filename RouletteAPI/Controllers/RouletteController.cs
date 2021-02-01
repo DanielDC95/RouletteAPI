@@ -14,7 +14,6 @@ namespace RouletteAPI.Controllers
     [ApiController]
     public class RouletteController : ControllerBase
     {
-        // GET: api/Roulette
         [Route("[action]/")]
         [HttpGet]
         public List<Dictionary<string, string>> ToList()
@@ -47,14 +46,6 @@ namespace RouletteAPI.Controllers
             return response;
         }
 
-        // GET: api/Roulette/5
-        [HttpGet("{id}", Name = "Get")]
-        public string Get(int id)
-        {
-            return id.ToString();
-        }
-
-        // POST: api/Roulette
         [Route("[action]/")]
         [HttpPost]
         public Dictionary<string, string> Create()
@@ -94,10 +85,15 @@ namespace RouletteAPI.Controllers
                     response.Add("result", "Success");
                     response.Add("message", "Ok.");
                 }
-                else
+                else if(String.IsNullOrEmpty(Bets.error))
                 {
                     response.Add("result", "Failure");
                     response.Add("message", "Bet failed.");
+                }
+                else
+                {
+                    response.Add("result", "Failure");
+                    response.Add("message", Bets.error);
                 }
             }
             catch
@@ -109,7 +105,6 @@ namespace RouletteAPI.Controllers
             return response;
         }
 
-        // PUT: api/Roulette/5
         [Route("[action]/")]
         [HttpPut]
         public Dictionary<string, string> Open([FromBody] JsonElement body)
@@ -117,7 +112,7 @@ namespace RouletteAPI.Controllers
             Dictionary<string, string> response = new Dictionary<string, string>();
             try
             {
-                int id = Int32.Parse(body.GetProperty("roullete_id").ToString());
+                int id = Int32.Parse(body.GetProperty("id").ToString());
                 Roulette roulette = new Roulette();
                 bool loaded = roulette.loadRoulette(id);
                 bool opened = false;
@@ -190,12 +185,6 @@ namespace RouletteAPI.Controllers
             }
 
             return winnersList;
-        }
-
-        // DELETE: api/ApiWithActions/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
         }
 
         public List<Dictionary<string, string>> getRoulettes(DataTable table)
