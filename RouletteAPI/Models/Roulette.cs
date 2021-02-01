@@ -27,10 +27,14 @@ namespace RouletteAPI.Models
             return id;
         }
 
-
         public string getState()
         {
             return state;
+        }
+
+        public int getLastNumber()
+        {
+            return last_number;
         }
 
         public bool create()
@@ -93,6 +97,39 @@ namespace RouletteAPI.Models
                 if (updated)
                 {
                     state = "open";
+                }
+            }
+            catch
+            {
+                updated = false;
+            }
+
+            return updated;
+        }
+
+        public bool Close()
+        {
+            DataToQueryUpdate queryData = new DataToQueryUpdate();
+            bool updated = false;
+            try
+            {
+                queryData.tableName = "roulettes";
+                FieldAndValue field = new FieldAndValue();
+                List<FieldAndValue> fieldsToInsert = new List<FieldAndValue>();
+                field.filedName = "state_id";
+                field.value = State.getID("close");
+                fieldsToInsert.Add(field);
+                field.filedName = "last_number";
+                field.value = last_number.ToString();
+                fieldsToInsert.Add(field);
+                queryData.fields = fieldsToInsert;
+                queryData.id = id;
+                dataBaseConnect();
+                updated = dataBaseUpdate(queryData);
+                dataBaseDesconnect();
+                if (updated)
+                {
+                    state = "close";
                 }
             }
             catch

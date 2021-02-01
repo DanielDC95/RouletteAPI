@@ -16,6 +16,14 @@ namespace RouletteAPI.Models
             public string betValue;
             public int amountToBet;
         }
+
+        public struct winners
+        {
+            public int user_id;
+            public string bet;
+            public int ammount;
+        }
+
         public static bool openRouletteBet(int roullete_id)
         {
             DataToQueryInsert queryData = new DataToQueryInsert();
@@ -47,6 +55,44 @@ namespace RouletteAPI.Models
             }
 
             return created;
+        }
+
+        public static int closeRouletteBet(int roullete_id)
+        {
+            DataToQueryUpdate queryData = new DataToQueryUpdate();
+            bool hasBetsOpen = rouletteHasBetsOpen(roullete_id);
+            bool created = false;
+            int openRouletteID = 0;
+            try
+            {
+                if (hasBetsOpen)
+                {
+                    queryData.tableName = "roulette_bets";
+                    FieldAndValue field = new FieldAndValue();
+                    List<FieldAndValue> fieldsToInsert = new List<FieldAndValue>();
+                    field.filedName = "roullete_id";
+                    field.value = roullete_id.ToString();
+                    fieldsToInsert.Add(field);
+                    field.filedName = "state_id";
+                    field.value = State.getID("close");
+                    fieldsToInsert.Add(field);
+                    field.filedName = "winner_number";
+                    field.value = generateWinninNumber(roullete_id).ToString();
+                    fieldsToInsert.Add(field);
+                    queryData.fields = fieldsToInsert;
+                    openRouletteID = getRouletteBetID(roullete_id);
+                    queryData.id = getRouletteBetID(roullete_id); ;
+                    dataBaseConnect();
+                    created = dataBaseUpdate(queryData);
+                    dataBaseDesconnect();
+                }
+            }
+            catch
+            {
+                created = false;
+            }
+
+            return openRouletteID;
         }
 
         public static bool toBet(Bet bet)
@@ -183,5 +229,178 @@ namespace RouletteAPI.Models
 
             return created;
         }
+
+        public static List<Dictionary<string, string>> getWinnersList(int roulette_bet_id)
+        {
+            int winning_number = getWinnigNumber(roulette_bet_id);
+            string winning_color = getWinningColor(winning_number);
+            DataTable winners = getWinnersByNumber(roulette_bet_id: roulette_bet_id, number: winning_number);
+            List<Dictionary<string, string>> winnersList = new List<Dictionary<string, string>>();
+            winnersList = listWinners(table: winners, winnersList: winnersList) ;
+            winners = getWinnersByColor(roulette_bet_id: roulette_bet_id, color: winning_color);
+            winnersList = listWinners(table: winners, winnersList: winnersList);
+
+            return winnersList;
+        }
+
+        public static int generateWinninNumber(int roullete_id)
+        {
+            Roulette roulette = new Roulette();
+            roulette.loadRoulette(roullete_id);
+            Random number = new Random();
+            return number.Next(0, roulette.getLastNumber() + 1);
+        }
+
+        public static DataTable getWinnersByColor(int roulette_bet_id, string color)
+        {
+            DataTable table = new DataTable();
+            DataToQuerySelect queryData = new DataToQuerySelect();
+            try
+            {
+                queryData.tableName = "bet_by_color";
+                List<string> fields = new List<string>();
+                fields.Add("user_id");
+                fields.Add("amount");
+                fields.Add("'color' \"betType\"");
+                queryData.fields = fields;
+                Conditions condition = new Conditions();
+                List<Conditions> conditionsList = new List<Conditions>();
+                condition.filedName = "roulette_bets_id";
+                condition.condition = "=";
+                condition.value = roulette_bet_id.ToString();
+                conditionsList.Add(condition);
+                condition.filedName = "color";
+                condition.condition = "=";
+                condition.value = color;
+                conditionsList.Add(condition);
+                queryData.conditions = conditionsList;
+                dataBaseConnect();
+                table = dataBaseSelect(queryData);
+                dataBaseDesconnect();
+            }
+            catch
+            {
+                table = null;
+            }
+
+            return table;
+        }
+
+        public static DataTable getWinnersByNumber(int roulette_bet_id, int number)
+        {
+            DataTable table = new DataTable();
+            DataToQuerySelect queryData = new DataToQuerySelect();
+            try
+            {
+                queryData.tableName = "bet_by_number";
+                List<string> fields = new List<string>();
+                fields.Add("user_id");
+                fields.Add("amount");
+                fields.Add("'number' \"betType\"");
+                queryData.fields = fields;
+                Conditions condition = new Conditions();
+                List<Conditions> conditionsList = new List<Conditions>();
+                condition.filedName = "roulette_bets_id";
+                condition.condition = "=";
+                condition.value = roulette_bet_id.ToString();
+                conditionsList.Add(condition);
+                condition.filedName = "number";
+                condition.condition = "=";
+                condition.value = number.ToString();
+                conditionsList.Add(condition);
+                queryData.conditions = conditionsList;
+                dataBaseConnect();
+                table = dataBaseSelect(queryData);
+                dataBaseDesconnect();
+            }
+            catch
+            {
+                table = null;
+            }
+
+            return table;
+        }
+
+        public static int getWinnigNumber(int roulette_bet_id)
+        {
+            DataTable table = new DataTable();
+            DataToQuerySelect queryData = new DataToQuerySelect();
+            int winningNumber = 0;
+            try
+            {
+                queryData.tableName = "roulette_bets";
+                List<string> fields = new List<string>();
+                fields.Add("winner_number");
+                queryData.fields = fields;
+                Conditions condition = new Conditions();
+                List<Conditions> conditionsList = new List<Conditions>();
+                condition.filedName = "id";
+                condition.condition = "=";
+                condition.value = roulette_bet_id.ToString();
+                conditionsList.Add(condition);
+                queryData.conditions = conditionsList;
+                dataBaseConnect();
+                table = dataBaseSelect(queryData);
+                dataBaseDesconnect();
+                winningNumber = Int32.Parse(findAFieldValueInTable(table: table,fieldName: "winner_number", lineNum: 0));
+            }
+            catch
+            {
+                winningNumber = 0;
+            }
+
+            return winningNumber;
+        }
+
+        public static string getWinningColor(int number)
+        {
+            string color;
+            if((number%2) == 0)
+            {
+                color = "Red";
+            }
+            else
+            {
+                color = "Black";
+            }
+
+            return color;
+        }
+
+        public static List<Dictionary<string, string>> listWinners(DataTable table, List<Dictionary<string, string>> winnersList)
+        {
+            for (int i = 0; i < table.Rows.Count; i++)
+            {
+                string user_id = findAFieldValueInTable(table: table, fieldName: "user_id", i);
+                string ammount = findAFieldValueInTable(table: table, fieldName: "amount", i);
+                string betType = findAFieldValueInTable(table: table, fieldName: "betType", i);
+                double reward = calculateReward(betType, Int32.Parse(ammount));
+                Dictionary<string, string> winner = new Dictionary<string, string>();
+                winner.Add("user_id", user_id);
+                winner.Add("reward", reward.ToString());
+                winnersList.Add(winner);
+            }
+
+            return winnersList;
+        }
+
+        public static double calculateReward(string betType, int ammount)
+        {
+            double reward = ammount;
+            switch (betType)
+            {
+                case "color":
+                    reward = ammount * 1.8;
+                    break;
+                case "number":
+                    reward = ammount * 5;
+                    break;
+                default:
+                    reward = 0;
+                    break;
+            }
+
+            return reward;
+        } 
     }
 }

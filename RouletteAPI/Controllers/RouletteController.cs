@@ -149,6 +149,49 @@ namespace RouletteAPI.Controllers
             return response;
         }
 
+        [Route("[action]/")]
+        [HttpPut]
+        public List<Dictionary<string, string>> Close([FromBody] JsonElement body)
+        {
+            Dictionary<string, string> response = new Dictionary<string, string>();
+            List<Dictionary<string, string>> winnersList = new List<Dictionary<string, string>>();
+            try
+            {
+                int id = Int32.Parse(body.GetProperty("id").ToString());
+                Roulette roulette = new Roulette();
+                bool loaded = roulette.loadRoulette(id);
+                bool roulette_closed = false;
+                if (loaded)
+                {
+                    roulette_closed = roulette.Close();
+                    int roulette_bet_id = Bets.closeRouletteBet(id);
+                    winnersList = Bets.getWinnersList(roulette_bet_id);
+                }
+                if (!roulette_closed)
+                {
+                    response.Add("result", "Failure");
+                    response.Add("id", id.ToString());
+                    response.Add("message", "close failed.");
+                    winnersList.Add(response);
+                }
+                else if (winnersList.Count == 0)
+                {
+                    response.Add("result", "Success");
+                    response.Add("id", id.ToString());
+                    response.Add("message", "No winner was found.");
+                    winnersList.Add(response);
+                }
+            }
+            catch(Exception ex)
+            {
+                response.Add("result", "Failure");
+                response.Add("message", "Has hapenned an error during the process.");
+                winnersList.Add(response);
+            }
+
+            return winnersList;
+        }
+
         // DELETE: api/ApiWithActions/5
         [HttpDelete("{id}")]
         public void Delete(int id)
