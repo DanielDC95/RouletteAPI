@@ -8,6 +8,14 @@ namespace RouletteAPI.Models
 {
     public class Bets
     {
+        public struct Bet
+        {
+            public int roullete_id;
+            public int user_id;
+            public string betType;
+            public string betValue;
+            public int amountToBet;
+        }
         public static bool openRouletteBet(int roullete_id)
         {
             DataToQueryInsert queryData = new DataToQueryInsert();
@@ -41,9 +49,40 @@ namespace RouletteAPI.Models
             return created;
         }
 
+        public static bool toBet(Bet bet)
+        {
+            bool betCorrectly = false;
+            switch (bet.betType)
+            {
+                case "color":
+                    betCorrectly = addBetByColor(bet);
+                    break;
+                case "number":
+                    betCorrectly = addBetByNumber(bet);
+                    break;
+            }
+
+            return betCorrectly;
+        }
+
         public static bool rouletteHasBetsOpen(int roullete_id)
         {
             bool hasBetsOpen = false;
+            if(getRouletteBetID(roullete_id) > 0)
+            {
+                hasBetsOpen = true;
+            }
+            else
+            {
+                hasBetsOpen = false;
+            }
+
+            return hasBetsOpen;
+        }
+
+        public static int getRouletteBetID(int roullete_id)
+        {
+            int id = 0;
             DataToQuerySelect queryData = new DataToQuerySelect();
             try
             {
@@ -65,20 +104,84 @@ namespace RouletteAPI.Models
                 dataBaseConnect();
                 DataTable table = dataBaseSelect(queryData);
                 dataBaseDesconnect();
-                if (table != null && table.Rows.Count > 0)
-                {
-                    hasBetsOpen = true;
-                }
-                else
-                {
-                    hasBetsOpen = false;
-                }
+                id = Int32.Parse(findAFieldValueInTable(table: table, fieldName: "id", lineNum: 0));
             }
             catch
             {
-                hasBetsOpen = false;
+                id = 0;
             }
-            return hasBetsOpen;
+
+            return id;
+        }
+
+        public static bool addBetByColor(Bet bet)
+        {
+            DataToQueryInsert queryData = new DataToQueryInsert();
+            int roulette_bets_id = getRouletteBetID(bet.roullete_id);
+            bool created = false;
+            try
+            {
+                queryData.tableName = "bet_by_color";
+                FieldAndValue field = new FieldAndValue();
+                List<FieldAndValue> fieldsToInsert = new List<FieldAndValue>();
+                field.filedName = "roulette_bets_id";
+                field.value = roulette_bets_id.ToString();
+                fieldsToInsert.Add(field);
+                field.filedName = "user_id";
+                field.value = bet.user_id.ToString();
+                fieldsToInsert.Add(field);
+                field.filedName = "color";
+                field.value = bet.betValue.ToString();
+                fieldsToInsert.Add(field);
+                field.filedName = "amount";
+                field.value = bet.amountToBet.ToString();
+                fieldsToInsert.Add(field);
+                queryData.fields = fieldsToInsert;
+                dataBaseConnect();
+                created = dataBaseInsert(queryData);
+                dataBaseDesconnect();
+            }
+            catch
+            {
+                created = false;
+            }
+
+            return created;
+        }
+
+        public static bool addBetByNumber(Bet bet)
+        {
+            DataToQueryInsert queryData = new DataToQueryInsert();
+            int roulette_bets_id = getRouletteBetID(bet.roullete_id);
+            bool created = false;
+            try
+            {
+                queryData.tableName = "bet_by_number";
+                FieldAndValue field = new FieldAndValue();
+                List<FieldAndValue> fieldsToInsert = new List<FieldAndValue>();
+                field.filedName = "roulette_bets_id";
+                field.value = roulette_bets_id.ToString();
+                fieldsToInsert.Add(field);
+                field.filedName = "user_id";
+                field.value = bet.user_id.ToString();
+                fieldsToInsert.Add(field);
+                field.filedName = "number";
+                field.value = bet.betValue.ToString();
+                fieldsToInsert.Add(field);
+                field.filedName = "amount";
+                field.value = bet.amountToBet.ToString();
+                fieldsToInsert.Add(field);
+                queryData.fields = fieldsToInsert;
+                dataBaseConnect();
+                created = dataBaseInsert(queryData);
+                dataBaseDesconnect();
+            }
+            catch
+            {
+                created = false;
+            }
+
+            return created;
         }
     }
 }

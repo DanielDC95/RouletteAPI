@@ -74,6 +74,41 @@ namespace RouletteAPI.Controllers
             return response;
         }
 
+        [Route("[action]/")]
+        [HttpPost]
+        public Dictionary<string, string> ToBet(int user_id,[FromBody] JsonElement body)
+        {
+            Dictionary<string, string> response = new Dictionary<string, string>();
+            bool betCorrectly = false;
+            try
+            {
+                Bets.Bet bet = new Bets.Bet();
+                bet.roullete_id = Int32.Parse(body.GetProperty("roullete_id").ToString());
+                bet.user_id = Int32.Parse(Request.Headers["user_id"]);
+                bet.betType = body.GetProperty("betType").ToString().ToLower();
+                bet.betValue = body.GetProperty("betValue").ToString();
+                bet.amountToBet = Int32.Parse(body.GetProperty("amount").ToString());
+                betCorrectly = Bets.toBet(bet);
+                if (betCorrectly)
+                {
+                    response.Add("result", "Success");
+                    response.Add("message", "Ok.");
+                }
+                else
+                {
+                    response.Add("result", "Failure");
+                    response.Add("message", "Bet failed.");
+                }
+            }
+            catch
+            {
+                response.Add("result", "Failure");
+                response.Add("message", "Has hapenned an error during the process.");
+            }
+
+            return response;
+        }
+
         // PUT: api/Roulette/5
         [Route("[action]/")]
         [HttpPut]
@@ -82,7 +117,7 @@ namespace RouletteAPI.Controllers
             Dictionary<string, string> response = new Dictionary<string, string>();
             try
             {
-                int id = Int32.Parse(body.GetProperty("id").ToString());
+                int id = Int32.Parse(body.GetProperty("roullete_id").ToString());
                 Roulette roulette = new Roulette();
                 bool loaded = roulette.loadRoulette(id);
                 bool opened = false;
